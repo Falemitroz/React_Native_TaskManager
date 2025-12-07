@@ -5,21 +5,18 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, min_ios_version_supported
-prepare_react_native_project!
+platform :ios, '15.1'  # imposta un deployment target compatibile con la maggior parte dei moduli nativi
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+prepare_react_native_project!
 
 target 'TaskManager' do
   config = use_native_modules!
 
+  # Non serve usare use_frameworks! a meno che tu non abbia librerie Swift che lo richiedono
+  # Nel tuo caso SQLite è compatibile senza use_frameworks!
+
   use_react_native!(
     :path => config[:reactNativePath],
-    # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
@@ -27,8 +24,14 @@ target 'TaskManager' do
     react_native_post_install(
       installer,
       config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
+      :mac_catalyst_enabled => false
     )
+
+    # questo serve a risolvere eventuali problemi con librerie C++ o Swift bridge
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      end
+    end
   end
 end

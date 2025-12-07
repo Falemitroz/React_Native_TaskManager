@@ -1,45 +1,32 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect } from 'react';
+import { ThemeProvider } from './src/context/ThemeContext';
+import { NavigationContainer } from '@react-navigation/native';
+import Layout from './src/screens/Layout';
+import { NavigationProvider } from './src/context/NavigationContext';
+import { Provider } from 'react-redux';
+import { store } from './src/app/store';
+import { initDB } from './src/database/init';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
+export default function App() {
+  useEffect(() => {
+    (async () => {
+      try {
+        const db = await initDB();
+        console.log('DB initialized:', db);
+      } catch (e) {
+        console.error('Error loading lists:', e);
+      }
+    })();
+  }, []);
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <Provider store={store}>
+      <ThemeProvider>
+        <NavigationContainer>
+          <NavigationProvider>
+            <Layout />
+          </NavigationProvider>
+        </NavigationContainer>
+      </ThemeProvider>
+    </Provider>
   );
 }
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
-
-export default App;
